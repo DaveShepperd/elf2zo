@@ -9,6 +9,7 @@
 #include <zlib.h>
 #include <sys/stat.h>
 #include "formats.h"
+#include "version.h"
 
 #define NAMES_SHSTRTAB	".shstrtab"
 #define NAMES_TEXT	".text"
@@ -33,12 +34,16 @@ static const char *help_msg[] = {
 	0
 };
 
-static int say_help(void)
+static int say_help(int justVersion)
 {
-	int ii;
-	for ( ii = 0; help_msg[ii]; ++ii )
+	printf("elf2zo Copyright 1998 Atari Games, Corp. Version %s\n", VERSION );
+	if ( !justVersion )
 	{
-		fputs(help_msg[ii], stdout);
+		int ii;
+		for ( ii = 0; help_msg[ii]; ++ii )
+		{
+			fputs(help_msg[ii], stdout);
+		}
 	}
 	return 1;
 }
@@ -53,7 +58,7 @@ int main(int argc, char *argv[])
 	Elf32_Sym *sym;
 	Elf_Data * data,**allsecs_data;
 	int filedes, image = 0, no_compress = 0, out_exe = 0, num_secs;
-	char *u_sym_name = 0, *strings;
+	char *u_sym_name = NULL, *strings;
 	int str_size;
 	int sym_name_off = 0, sym_comp_off = 0, sym_decomp_off = 0, sym_xfer_off = 0;
 	char *s = 0;
@@ -62,12 +67,11 @@ int main(int argc, char *argv[])
 	Elf32_Addr prog_len = 0;
 	int len, sts, verbose = 0;
 	Elf_Cmd cmd;
-	Elf32_Addr prog_base=0, prog_memsz=0, prog_sa=0;
+	Elf32_Addr prog_loLimit=0xFFFFFFFF, prog_hiLimit=0, prog_sa=0;
 	uLong comprLen = 0, prog_align = 4;
 	unsigned char *compr = 0;
 	int opt;
 	
-	printf("elf2zo Copyright 1998 Atari Games, Corp. Version %s %s\n", __DATE__, __TIME__);
 	elf_version(EV_CURRENT);        /* required by the elf library functions */
 	while ( (opt=getopt(argc,argv,"ein:vz")) != -1 )
 	{
@@ -89,13 +93,13 @@ int main(int argc, char *argv[])
 			no_compress = 1;
 			continue;
 		default:
-			return say_help();
+			return say_help(0);
 		}
 	}
 	if ( argc-optind < 2 )
-	{
-		return say_help();
-	}
+		return say_help(0);
+	if ( verbose )
+		say_help(1);
 	inpFileName = argv[optind];
 	outFileName = argv[optind+1];
 	filedes = open(inpFileName, O_RDONLY, 0); /* open input file */
@@ -166,10 +170,8 @@ int main(int argc, char *argv[])
 					num_secs = ehdr->e_shnum;
 					allsecs = (Elf32_Shdr **)calloc(num_secs, sizeof(Elf32_Shdr *));
 					allsecs_data = (Elf_Data **)calloc(num_secs, sizeof(Elf_Data *));
-					prog_base = 0xFFFFFFFF;
 					prog_align = 0;
 					prog_len = 0;
-					prog_memsz = 0;
 					for ( sects = jj = 0; jj < num_secs; ++jj )
 					{
 						if ( (scn = elf_getscn(elf, jj)) != 0 )
@@ -190,32 +192,20 @@ int main(int argc, char *argv[])
 					for ( jj = 0; jj < num_secs; ++jj )
 					{
 						shdr = allsecs[jj];
-						if ( shdr && (shdr->sh_type == SHT_PROGBITS ||
-									  shdr->sh_type == SHT_MIPS_REGINFO ||
-									  shdr->sh_type == SHT_NOBITS) )
+						if ( shdr && (shdr->sh_type == SHT_PROGBITS) && (shdr->sh_flags & SHF_ALLOC) )
 						{
 							if ( sect_strings && !strcmp(".comment", sect_strings + shdr->sh_name) )
 								continue;
-							if ( (uLong)shdr->sh_addr < prog_base )
-								prog_base = shdr->sh_addr;
+							if ( (uLong)shdr->sh_addr < prog_loLimit )
+								prog_loLimit = shdr->sh_addr;
 							if ( shdr->sh_addralign > prog_align )
 								prog_align = shdr->sh_addralign;
-							if ( shdr->sh_type != SHT_NOBITS )
-							{
-								if ( shdr->sh_addr + shdr->sh_size > prog_len )
-								{
-									prog_len = shdr->sh_addr + shdr->sh_size;
-								}
-							}
-							if ( shdr->sh_addr + shdr->sh_size > prog_memsz )
-							{
-								prog_memsz = shdr->sh_addr + shdr->sh_size;
-							}
+							if ( shdr->sh_addr + shdr->sh_size > prog_hiLimit )
+								prog_hiLimit = shdr->sh_addr + shdr->sh_size;
 						}
 					}
 					prog_sa = ehdr->e_entry;        /* record starting address */
-					prog_len = prog_len - prog_base;    /* data length is dif between start and end of PROGBITS */
-					prog_memsz = prog_memsz - prog_base; /* memsize is diff between start and end of all sects */
+					prog_len = prog_hiLimit-prog_loLimit;
 					prog = (unsigned char *)calloc(prog_len, 1);     /* place to put uncompressed data */
 					if ( verbose )
 					{
@@ -225,8 +215,8 @@ int main(int argc, char *argv[])
 						printf("   filsiz=%" FMT_L_PRFX "d, memsiz=%" FMT_L_PRFX "d, flags=%" FMT_L_PRFX "d, align=%" FMT_L_PRFX "d\n",
 							   phdr->p_filesz, phdr->p_memsz,
 							   phdr->p_flags, phdr->p_align);
-						printf("   prog_base=%08" FMT_L_PRFX "X, prog_len=%08" FMT_L_PRFX "X, prog_sa=%08" FMT_L_PRFX "X, prog_memsz=%08" FMT_L_PRFX "X\n",
-							   prog_base, prog_len, prog_sa, prog_memsz);
+						printf("   prog_loLimig=%08" FMT_L_PRFX "X, prog_hiLimit=%08" FMT_L_PRFX "X, prog_len=%08" FMT_L_PRFX "X, prog_sa=%08" FMT_L_PRFX "X\n",
+							   prog_loLimit, prog_hiLimit, prog_len, prog_sa);
 					}
 					if ( !prog )
 					{
@@ -238,10 +228,10 @@ int main(int argc, char *argv[])
 						shdr = allsecs[jj];
 						if ( sect_strings && !strcmp(".comment", sect_strings + shdr->sh_name) )
 							continue;
-						if ( shdr && (shdr->sh_type == SHT_PROGBITS || shdr->sh_type == SHT_MIPS_REGINFO) )
+						if ( shdr && (shdr->sh_type == SHT_PROGBITS) && (shdr->sh_flags & SHF_ALLOC) )
 						{
 							uLong off;
-							off = shdr->sh_addr - prog_base;
+							off = shdr->sh_addr - prog_loLimit;
 							data = allsecs_data[jj];
 							if ( data )
 							{
@@ -329,22 +319,16 @@ int main(int argc, char *argv[])
 		}
 		if ( verbose )
 			printf("Compressed %s from %d to %ld. Compression ratio %4.2f:1\n",
-				   *argv, prog_len, comprLen, (float)prog_len / (float)comprLen);
+				   inpFileName, prog_len, comprLen, (float)prog_len / (float)comprLen);
 	}
-	++argv;                 /* advance to output filename */
 	if ( !u_sym_name )              /* if no symbol name provided */
 	{
-		char *beg, *end;
-		s = *argv;              /* point to output filename */
-		beg = strrchr(s, '/');          /* remove leading '/'s */
+		const char *beg, *end;
+		beg = strrchr(outFileName, '/');          /* remove leading '/'s */
 		if ( !beg )
-		{
-			beg = s;
-		}
+			beg = outFileName;
 		else
-		{
 			++beg;
-		}
 		end = strchr(beg, '.');         /* remove trailing '.'s */
 		if ( !end )
 			end = beg + strlen(beg);
@@ -358,7 +342,9 @@ int main(int argc, char *argv[])
 	str_size = 1 + sizeof(NAMES_SHSTRTAB) + sizeof(NAMES_TEXT) + sizeof(NAMES_SYMTAB) +
 		3 * (len + 1) + sizeof(SUFFIX_COMP) + sizeof(SUFFIX_DECOMP) + sizeof(SUFFIX_XFER);
 	str_size = (str_size + 15) & -16;       /* round it up to 16 byte boundary */
-	strings = (char *)malloc(str_size);
+	strings = (char *)calloc(1, str_size);	/* must be zero filled: the pad bytes are part of
+											   .shstrtab and BFD rejects a string table whose
+											   last byte isn't NUL */
 	strings[0] = 0;
 /* Copy in all string names */
 	memcpy(strings + 1, NAMES_SHSTRTAB, sizeof(NAMES_SHSTRTAB));
@@ -424,13 +410,13 @@ int main(int argc, char *argv[])
 	{
 		shdr->sh_addralign = 16;
 		shdr->sh_flags |= SHF_EXECINSTR;
-		shdr->sh_addr = prog_base;
+		shdr->sh_addr = prog_loLimit;
 		phdr = elf32_newphdr(elf, 1);
 		if ( phdr )
 		{
 			phdr->p_type = PT_LOAD;
-			phdr->p_vaddr = phdr->p_paddr = prog_base;
-			phdr->p_memsz = prog_memsz;
+			phdr->p_vaddr = phdr->p_paddr = prog_loLimit;
+			phdr->p_memsz = prog_len;
 			phdr->p_filesz = prog_len;
 			phdr->p_align = prog_align;
 			phdr->p_flags = 7;      /* rwx */
