@@ -10,9 +10,8 @@
 		Type="gnuc"
 		DebugCallbackName="gdb"
 		Version="1"
-		OutputFile="%bdelf1zo"
-		CompilerConfigName="Latest Version"
-		Defines="">
+		OutputFile="%bdelf2zo"
+		CompilerConfigName="Latest Version">
 		<Menu>
 			<Target
 				Name="Compile"
@@ -23,9 +22,7 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec
-					CmdLine='gcc -c %xup -ansi %defd -g %~other -o "%bd%n%oe" %i %f'
-					OtherOptions="-std=c99 -Wall -pedantic -ansi -m32"/>
+				<Exec CmdLine='gcc -ansi -c %xup  %defd -g -o "%bd%n%oe" %i "%f"'/>
 			</Target>
 			<Target
 				Name="Link"
@@ -36,9 +33,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec
-					CmdLine='gcc %xup -g %~other -o "%o" %objs'
-					OtherOptions="-m32"/>
+				<Exec CmdLine='gcc -ansi %xup -g -o "%o" %f %libs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -136,20 +131,14 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
-		<Includes/>
-		<Libs PreObjects="0">
-			<Lib File="-lz"/>
-			<Lib File="-lelf"/>
-		</Libs>
 	</Config>
 	<Config
 		Name="Release"
 		Type="gnuc"
 		DebugCallbackName="gdb"
 		Version="1"
-		OutputFile="%bdelf1zo"
-		CompilerConfigName="Latest Version"
-		Defines="">
+		OutputFile="%bdelf2zo"
+		CompilerConfigName="Latest Version">
 		<Menu>
 			<Target
 				Name="Compile"
@@ -160,7 +149,7 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -c %xup -ansi %defd -o "%bd%n%oe" %i %f'/>
+				<Exec CmdLine='gcc -ansi -c %xup %defd -o "%bd%n%oe" %i "%f"'/>
 			</Target>
 			<Target
 				Name="Link"
@@ -171,7 +160,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc %xup -o "%o" %objs'/>
+				<Exec CmdLine='gcc -ansi %xup -o "%o" %f %libs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -269,35 +258,33 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
-		<Includes/>
-		<Libs PreObjects="0"/>
 	</Config>
 	<Files>
 		<Folder
 			Name="Source Files"
 			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
-			GUID="{4D4FEDC4-87D2-4CD9-BFB8-F28624F240B4}">
+			GUID="{BACAD16B-A94F-4677-8E42-20E9CEF79C97}">
 			<F N="elf2zo.c"/>
 		</Folder>
 		<Folder
 			Name="Header Files"
 			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
-			GUID="{0E3E0DD6-0DE8-43A9-B15F-DB72763FB8BB}">
+			GUID="{C8C12A96-5694-40BB-AA4C-69E59CEECF69}">
 			<F N="formats.h"/>
-			<F N="version.h"/>
 		</Folder>
 		<Folder
 			Name="Resource Files"
 			Filters="*.ico;*.cur;*.dlg"
-			GUID="{322E694D-9046-4571-BB2F-79B452954279}"/>
+			GUID="{DF949638-598C-4B30-ABC0-C75C3BEE1A52}"/>
 		<Folder
 			Name="Bitmaps"
 			Filters="*.bmp"
-			GUID="{BB722C04-CAE4-41DD-AE20-BAE590107BB7}"/>
+			GUID="{89AA2E04-6F09-4091-9EAB-5ED297F72B09}"/>
 		<Folder
 			Name="Other Files"
 			Filters=""
-			GUID="{74F1748D-952C-40B8-8BEF-79810C049CCF}">
+			GUID="{5462F47F-E4B5-4DE8-B5B4-F58D7C5BF2F4}">
+			<F N="LICENSE.txt"/>
 			<F
 				N="Makefile"
 				Type="Makefile"/>

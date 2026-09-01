@@ -12,7 +12,7 @@
 #include "version.h"
 
 #define NAMES_SHSTRTAB	".shstrtab"
-#define NAMES_TEXT	".text"
+#define NAMES_TEXT	".zotext"
 #define NAMES_SYMTAB	".symtab"
 #define SUFFIX_COMP	"_comp_size"		/* size of data compressed */
 #define SUFFIX_DECOMP	"_decomp_size"		/* size of data uncompressed */
