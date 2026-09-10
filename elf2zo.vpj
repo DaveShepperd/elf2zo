@@ -11,7 +11,8 @@
 		DebugCallbackName="gdb"
 		Version="1"
 		OutputFile="%bdelf2zo"
-		CompilerConfigName="Latest Version">
+		CompilerConfigName="Latest Version"
+		Defines="">
 		<Menu>
 			<Target
 				Name="Compile"
@@ -22,7 +23,7 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi -c %xup  %defd -g -o "%bd%n%oe" %i "%f"'/>
+				<Exec CmdLine='gcc -c %xup -ansi %defd -g -o "%bd%n%oe" %i %f'/>
 			</Target>
 			<Target
 				Name="Link"
@@ -33,7 +34,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi %xup -g -o "%o" %f %libs'/>
+				<Exec CmdLine='gcc %xup -g -o "%o" %objs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -131,6 +132,13 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
+		<Includes>
+			<Include Dir="/usr/include/libelf"/>
+		</Includes>
+		<Libs PreObjects="0">
+			<Lib File="-lelf"/>
+			<Lib File="-lz"/>
+		</Libs>
 	</Config>
 	<Config
 		Name="Release"
@@ -138,7 +146,8 @@
 		DebugCallbackName="gdb"
 		Version="1"
 		OutputFile="%bdelf2zo"
-		CompilerConfigName="Latest Version">
+		CompilerConfigName="Latest Version"
+		Defines="">
 		<Menu>
 			<Target
 				Name="Compile"
@@ -149,7 +158,7 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi -c %xup %defd -o "%bd%n%oe" %i "%f"'/>
+				<Exec CmdLine='gcc -c %xup -ansi %defd -o "%bd%n%oe" %i %f'/>
 			</Target>
 			<Target
 				Name="Link"
@@ -160,7 +169,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi %xup -o "%o" %f %libs'/>
+				<Exec CmdLine='gcc %xup -o "%o" %objs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -258,6 +267,8 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
+		<Includes/>
+		<Libs PreObjects="0"/>
 	</Config>
 	<Files>
 		<Folder
@@ -271,6 +282,7 @@
 			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
 			GUID="{C8C12A96-5694-40BB-AA4C-69E59CEECF69}">
 			<F N="formats.h"/>
+			<F N="version.h"/>
 		</Folder>
 		<Folder
 			Name="Resource Files"

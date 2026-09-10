@@ -12,7 +12,7 @@
 #include "version.h"
 
 #define NAMES_SHSTRTAB	".shstrtab"
-#define NAMES_TEXT	".zotext"
+/* #define NAMES_TEXT	".zotext" */
 #define NAMES_SYMTAB	".symtab"
 #define SUFFIX_COMP	"_comp_size"		/* size of data compressed */
 #define SUFFIX_DECOMP	"_decomp_size"		/* size of data uncompressed */
@@ -27,6 +27,7 @@ static const char *help_msg[] = {
 	"   -n syn_name = ASCII string to become label of data\n",
 	"        (name defaults to same as output filename if this\n",
 	"        parameter is not specified; ignored if -e specified)\n",
+	"   -s sec_name = set name of section. Default is .zotext\n"
 	"   -v = set verbose (announce operations)\n",
 	"   -z = DON\'T compress the data\n",
 	"    input = input filename\n",
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 	int str_size;
 	int sym_name_off = 0, sym_comp_off = 0, sym_decomp_off = 0, sym_xfer_off = 0;
 	char *s = 0;
-	const char *inpFileName, *outFileName;
+	const char *inpFileName, *outFileName, *sectionName=".zotext";
 	unsigned char *prog = 0;
 	Elf32_Addr prog_len = 0;
 	int len, sts, verbose = 0;
@@ -70,10 +71,10 @@ int main(int argc, char *argv[])
 	Elf32_Addr prog_loLimit=0xFFFFFFFF, prog_hiLimit=0, prog_sa=0;
 	uLong comprLen = 0, prog_align = 4;
 	unsigned char *compr = 0;
-	int opt;
+	int opt, sectionNameLen;
 	
 	elf_version(EV_CURRENT);        /* required by the elf library functions */
-	while ( (opt=getopt(argc,argv,"ein:vz")) != -1 )
+	while ( (opt=getopt(argc,argv,"ein:s:vz")) != -1 )
 	{
 		switch (opt)
 		{
@@ -85,6 +86,9 @@ int main(int argc, char *argv[])
 			continue;
 		case 'n':
 			u_sym_name = optarg;
+			continue;
+		case 's':
+			sectionName = optarg;
 			continue;
 		case 'v':
 			verbose = 1;
@@ -339,7 +343,8 @@ int main(int argc, char *argv[])
 
 /* Get buffer to hold all strings */
 	len = strlen(u_sym_name);
-	str_size = 1 + sizeof(NAMES_SHSTRTAB) + sizeof(NAMES_TEXT) + sizeof(NAMES_SYMTAB) +
+	sectionNameLen = strlen(sectionName)+1;
+	str_size = 1 + sizeof(NAMES_SHSTRTAB) + sectionNameLen + sizeof(NAMES_SYMTAB) +
 		3 * (len + 1) + sizeof(SUFFIX_COMP) + sizeof(SUFFIX_DECOMP) + sizeof(SUFFIX_XFER);
 	str_size = (str_size + 15) & -16;       /* round it up to 16 byte boundary */
 	strings = (char *)calloc(1, str_size);	/* must be zero filled: the pad bytes are part of
@@ -348,13 +353,13 @@ int main(int argc, char *argv[])
 	strings[0] = 0;
 /* Copy in all string names */
 	memcpy(strings + 1, NAMES_SHSTRTAB, sizeof(NAMES_SHSTRTAB));
-	memcpy(strings + 1 + sizeof(NAMES_SHSTRTAB), NAMES_TEXT, sizeof(NAMES_TEXT));
-	memcpy(strings + 1 + sizeof(NAMES_SHSTRTAB) + sizeof(NAMES_TEXT), NAMES_SYMTAB, sizeof(NAMES_SYMTAB));
+	memcpy(strings + 1 + sizeof(NAMES_SHSTRTAB), sectionName, sectionNameLen);
+	memcpy(strings + 1 + sizeof(NAMES_SHSTRTAB) + sectionNameLen, NAMES_SYMTAB, sizeof(NAMES_SYMTAB));
 
 /* construct the _comp_size and _decomp_size strings */
 	if ( !out_exe )
 	{
-		sym_name_off = 1 + sizeof(NAMES_SHSTRTAB) + sizeof(NAMES_TEXT) + sizeof(NAMES_SYMTAB);
+		sym_name_off = 1 + sizeof(NAMES_SHSTRTAB) + sectionNameLen + sizeof(NAMES_SYMTAB);
 		s = strings + sym_name_off;
 		memcpy(s, u_sym_name, len + 1);
 		sym_comp_off = sym_name_off + len + 1;
@@ -440,7 +445,7 @@ int main(int argc, char *argv[])
 	{
 		scn = elf_newscn(elf);      /* section 3 is the .symtab section */
 		shdr = elf32_getshdr(scn);
-		shdr->sh_name = 1 + sizeof(NAMES_SHSTRTAB) + sizeof(NAMES_TEXT); /* third name in string table */
+		shdr->sh_name = 1 + sizeof(NAMES_SHSTRTAB) + sectionNameLen; /* third name in string table */
 		shdr->sh_type = SHT_SYMTAB;
 		shdr->sh_flags = 0;
 		shdr->sh_link = 1;          /* string table section index */
