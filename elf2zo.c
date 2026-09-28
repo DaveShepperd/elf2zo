@@ -27,7 +27,7 @@ static const char *help_msg[] = {
 	"   -n syn_name = ASCII string to become label of data\n",
 	"        (name defaults to same as output filename if this\n",
 	"        parameter is not specified; ignored if -e specified)\n",
-	"   -s sec_name = set name of section. Default is .zotext\n"
+	"   -s sec_name = set name of section. Default is .text\n"
 	"   -v = set verbose (announce operations)\n",
 	"   -z = DON\'T compress the data\n",
 	"    input = input filename\n",
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 	int str_size;
 	int sym_name_off = 0, sym_comp_off = 0, sym_decomp_off = 0, sym_xfer_off = 0;
 	char *s = 0;
-	const char *inpFileName, *outFileName, *sectionName=".zotext";
+	const char *inpFileName, *outFileName, *sectionName=".text";
 	unsigned char *prog = 0;
 	Elf32_Addr prog_len = 0;
 	int len, sts, verbose = 0;
