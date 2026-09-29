@@ -4,7 +4,7 @@ INCS =  -I${ELFLIB}
 
 #
 # For Linux systems:
-CFLAGS = $(INCS) $(DEFINES) -g -std=c99 -Wall -pedantic -ansi -m32
+CFLAGS = $(INCS) $(DEFINES) -g -std=c99 -Wall -pedantic -ansi #-m32
 CPPFLAGS = $(INCS) $(DEFINES) -g -std=c++17 -Wall -ansi 
 CC = gcc 
 CPP = g++
